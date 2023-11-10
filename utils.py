@@ -74,4 +74,11 @@ def feature_distance(target_features: dict, test_features: dict) -> float:
 def backtrace(path: dict, target_id: str, source_id: str):
     sol_path = []
 
+    next = target_id
+    while next != source_id:
+        sol_path.append(next)
+        next = path[next][1]
+
+    return sol_path[::-1]
+
     

@@ -7,19 +7,24 @@ import json, time, sys
 from heapq import heappush, heappop
 from utils import *
 
-sp = spotipy.Spotify(client_credentials_manager=SpotifyClientCredentials())
+SPOTIPY_CLIENT_ID = '0387ebd733aa4a8e97ab976f87422cf1'
+SPOTIPY_CLIENT_SECRET = '0fbdb2b2366c4d44b01a7fb28c882de0'
 
-SOURCE_ID = '4um6CPDIxnNWSEbj3LJQhQ'
-TARGET_ID = '0TiZDNPU2t4STNJW4Qdj22'
+# SPOTIPY_CLIENT_ID = 'dfa8b23916c140f5b7c7572da25c4734'
+# SPOTIPY_CLIENT_SECRET = 'e65a6c357d80435fb629f41677abff3f'
+
+sp = spotipy.Spotify(client_credentials_manager=SpotifyClientCredentials(client_id=SPOTIPY_CLIENT_ID, client_secret=SPOTIPY_CLIENT_SECRET))
+
+SOURCE_ID = '00hWmPGoTjMQPNzrqGA9zS'
+TARGET_ID = '4RtL381bftPtvQhOpO5S3z'
 
 source_feats = normalized_features(sp.audio_features(tracks=[SOURCE_ID])[0])
 target_feats = normalized_features(sp.audio_features(tracks=[TARGET_ID])[0])
 
 print(f'Ideal straight-line cost: {feature_distance(source_feats, target_feats)}')
-print(f'GOAL:')
+print(f'SOURCE: {SOURCE_ID} | GOAL: {TARGET_ID}')
 
-# explored_songs = {SOURCE_ID}
-features: dict[str, str] = {SOURCE_ID: source_feats}
+features: dict[str, dict[str, float]] = {SOURCE_ID: source_feats}
 # min-heap of (heuristic, ID)
 frontier = [(-1, SOURCE_ID)]
 # tracks best search path up until a given song
@@ -27,15 +32,18 @@ frontier = [(-1, SOURCE_ID)]
 path: dict[str, tuple[float, str]] = {SOURCE_ID: (0, None)}
 
 SEARCH_SIZE = 10
-SEARCH_DEPTH = 100
+SEARCH_DEPTH = 200
+
+print(f'Search Parameters: {SEARCH_SIZE=} | {SEARCH_DEPTH=}')
+print(f'\n-----------------------------------------------\n')
 
 search_iter = 0
 search_id = ''
 while search_iter < SEARCH_DEPTH and search_id != TARGET_ID:
 
     x = heappop(frontier)
-    print(x)
-    _, search_id = x
+    total_cost, search_id = x
+    print(f'Iteration: {search_iter} | Song: {search_id} | Total cost: {total_cost:.4f}')
 
     local_source_feats = features[search_id]
     neighbors = sp.recommendations(seed_tracks=[search_id], limit=SEARCH_SIZE)
@@ -51,23 +59,11 @@ while search_iter < SEARCH_DEPTH and search_id != TARGET_ID:
             features[track_feats['id']] = normalized_features(track_feats)
 
     for id in neighbor_ids:
-
-        # if id in explored_songs:
-        #     feats = explored_songs[id]
-        # else:
-        #     feats = normalized_features(sp.audio_features(tracks=[id])[0])
-        #     if feats == None:
-        #         # print(f'Failed to process song: {id}')
-        #         continue
-
         feats = features[id]
         if feats == None:
             continue
-
-        # explored_songs[id] = feats
-        # explored_songs.add(id)
         
-        # udpate frontier
+        # update frontier
         heuristic_cost = feature_distance(target_feats, feats)
         # cost from search origin to this song, plus cost from start to search origin
         path_cost = feature_distance(local_source_feats, feats) + path[search_id][0]
@@ -80,13 +76,54 @@ while search_iter < SEARCH_DEPTH and search_id != TARGET_ID:
             path[id] = (path_cost, search_id)
 
         # sleep to avoid a timeout from the API
-        time.sleep(0.25)
-        search_iter += 1
+        time.sleep(1)
+    
+    search_iter += 1
 
-if search_id != TARGET_ID:
+print('--------------------------------------------------------')
+
+found_path = search_id == TARGET_ID
+
+if not found_path:
     print('No path found :(')
+    print("Approximating search path...")
+
+    closest_to_target = None
+    closest_distance = 999999
+    closest_feats = None
+    
+    for id, feats in features.items():
+        if feats is None:
+            continue
+
+        distance = feature_distance(target_feats, feats)
+        if distance < closest_distance:
+            closest_distance = distance
+            closest_to_target = id
+            closest_feats = feats
+    
+    print(f"Using song {closest_to_target} as the target (distance from target: {closest_distance})...")
+    solution_path = backtrace(path, closest_to_target, SOURCE_ID)
+
 else:
     print('Found a path!')
     solution_path = backtrace(path, TARGET_ID, SOURCE_ID)
 
+data = {
+    'meta': {
+        'SOURCE_ID': SOURCE_ID,
+        'TARGET_ID': TARGET_ID,
+        'FOUND': search_id == TARGET_ID,
+        'APPROX': None if found_path else closest_to_target,
+        'SEARCH_DEPTH': SEARCH_DEPTH,
+        'SEARCH_SIZE': SEARCH_SIZE,
+    },
+    'SOURCE_FEATS': source_feats,
+    'TARGET_FEATS': target_feats,
+    'APPROX_FEATS': None if found_path else closest_feats,
+    'PATH': solution_path,
+    'ITERATIONS_REQUIRED': search_iter
+}
 
+with open(f'results/{SOURCE_ID}-{TARGET_ID}.json', 'w') as f:
+    json.dump(data, f, indent=4)
