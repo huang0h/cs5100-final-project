@@ -3,20 +3,23 @@
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 
-import json, time, sys
+import json, time, sys, os
 from heapq import heappush, heappop
 from utils import *
 
-SPOTIPY_CLIENT_ID = '0387ebd733aa4a8e97ab976f87422cf1'
-SPOTIPY_CLIENT_SECRET = '0fbdb2b2366c4d44b01a7fb28c882de0'
+# SPOTIPY_CLIENT_ID = '0387ebd733aa4a8e97ab976f87422cf1'
+# SPOTIPY_CLIENT_SECRET = '0fbdb2b2366c4d44b01a7fb28c882de0'
 
-# SPOTIPY_CLIENT_ID = 'dfa8b23916c140f5b7c7572da25c4734'
-# SPOTIPY_CLIENT_SECRET = 'e65a6c357d80435fb629f41677abff3f'
+SPOTIPY_CLIENT_ID = 'dfa8b23916c140f5b7c7572da25c4734'
+SPOTIPY_CLIENT_SECRET = 'e65a6c357d80435fb629f41677abff3f'
+
+# if os.path.isfile('.cache'):
+#     os.remove('.cache')
 
 sp = spotipy.Spotify(client_credentials_manager=SpotifyClientCredentials(client_id=SPOTIPY_CLIENT_ID, client_secret=SPOTIPY_CLIENT_SECRET))
 
-SOURCE_ID = '00hWmPGoTjMQPNzrqGA9zS'
-TARGET_ID = '4RtL381bftPtvQhOpO5S3z'
+SOURCE_ID = '3RDfWxok6okDp9WtTCVPJR'
+TARGET_ID = '71IzhN7H8ZkCIMotAjSHNk'
 
 source_feats = normalized_features(sp.audio_features(tracks=[SOURCE_ID])[0])
 target_feats = normalized_features(sp.audio_features(tracks=[TARGET_ID])[0])
@@ -76,7 +79,7 @@ while search_iter < SEARCH_DEPTH and search_id != TARGET_ID:
             path[id] = (path_cost, search_id)
 
         # sleep to avoid a timeout from the API
-        time.sleep(1)
+        time.sleep(1.2)
     
     search_iter += 1
 
