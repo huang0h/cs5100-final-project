@@ -10,6 +10,9 @@ SPOTIPY_CLIENT_SECRET = '0fbdb2b2366c4d44b01a7fb28c882de0'
 # SPOTIPY_CLIENT_ID = 'dfa8b23916c140f5b7c7572da25c4734'
 # SPOTIPY_CLIENT_SECRET = 'e65a6c357d80435fb629f41677abff3f'
 
+# SPOTIPY_CLIENT_ID = '89adeaef38664c11988fd12defc1df71'
+# SPOTIPY_CLIENT_SECRET = '9fd3b4fc50bb4002babf623768c18efd'
+
 login_data = {
     "grant_type": "client_credentials",
     "client_id": SPOTIPY_CLIENT_ID,

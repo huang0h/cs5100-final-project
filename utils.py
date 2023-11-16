@@ -24,7 +24,10 @@ AUDIO_FEATURES = {
     'speechiness', 
     'tempo', 
     'time_signature', 
-    'valence'
+    'valence',
+    'key_confidence',
+    'mode_confidence',
+    'time_signature_confidence',
 }
 
 def clamp(val: float, min_v: float, max_v: float) -> float:
@@ -48,13 +51,13 @@ def normalized_features(analysis: dict | None) -> dict[str, float] | None:
             if val == -1:
                 norm_features[key] = val
             else:
-                norm_features[key] = clamp(val, MIN_KEY, MAX_KEY) / (MAX_KEY - MIN_KEY)
+                norm_features[key] = (clamp(val, MIN_KEY, MAX_KEY) - MIN_KEY) / (MAX_KEY - MIN_KEY)
         elif key == 'loudness':
-            norm_features[key] = (clamp(val, MIN_DB, MAX_DB) / (MAX_DB - MIN_DB)) + 1
+            norm_features[key] = (clamp(val, MIN_DB, MAX_DB) - MIN_DB) / (MAX_DB - MIN_DB)
         elif key == 'tempo':
-            norm_features[key] = clamp(val, MIN_TEMPO, MAX_TEMPO) / (MAX_TEMPO - MIN_TEMPO)
+            norm_features[key] = (clamp(val, MIN_TEMPO, MAX_TEMPO) - MIN_TEMPO) / (MAX_TEMPO - MIN_TEMPO)
         elif key == 'time_signature':
-            norm_features[key] = clamp(val, MIN_TIME_SIGNATURE, MAX_TIME_SIGNATURE) / (MAX_TIME_SIGNATURE - MIN_TIME_SIGNATURE)
+            norm_features[key] = (clamp(val, MIN_TIME_SIGNATURE, MAX_TIME_SIGNATURE) - MIN_TIME_SIGNATURE) / (MAX_TIME_SIGNATURE - MIN_TIME_SIGNATURE)
         else:
             norm_features[key] = val
 
@@ -67,6 +70,9 @@ def feature_distance(target_features: dict, test_features: dict) -> float:
     # print(test_features)
 
     for feat in AUDIO_FEATURES:
+        if not (feat in target_features and feat in test_features):
+            continue
+
         sum += (target_features[feat] - test_features[feat]) ** 2
         
     return sum ** 0.5
