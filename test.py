@@ -22,6 +22,6 @@ login_data = {
 res = req.post('https://accounts.spotify.com/api/token', headers=login_headers, data=login_data)
 token = res.json()['access_token']
 
-req = req.get(f'https://api.spotify.com/v1/recommendations?seed_tracks=4um6CPDIxnNWSEbj3LJQhQ', headers={'Authorization': f'Bearer {token}'})
+res = req.get(f'https://api.spotify.com/v1/recommendations?seed_tracks=4um6CPDIxnNWSEbj3LJQhQ', headers={'Authorization': f'Bearer {token}'})
 
-print(req.headers, req.text)
+print(res.headers, res.text, res.status_code)

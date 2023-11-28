@@ -1,5 +1,16 @@
 import math
 
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
 MIN_KEY = 0
 MAX_KEY = 11
 
@@ -29,6 +40,9 @@ AUDIO_FEATURES = {
     'mode_confidence',
     'time_signature_confidence',
 }
+
+def printsep():
+    print(f'\n-----------------------------------------------------------------\n')
 
 def clamp(val: float, min_v: float, max_v: float) -> float:
     return max(min(val, max_v), min_v)
@@ -63,7 +77,18 @@ def normalized_features(analysis: dict | None) -> dict[str, float] | None:
 
     return norm_features
 
-def feature_distance(target_features: dict, test_features: dict) -> float:
+def feature_distance_l1(target_features: dict, test_features: dict) -> float:
+    sum = 0
+    
+    for feat in AUDIO_FEATURES:
+        if not (feat in target_features and feat in test_features):
+            continue
+
+        sum += abs(target_features[feat] - test_features[feat])
+    
+    return sum
+
+def feature_distance_l2(target_features: dict, test_features: dict) -> float:
     sum = 0
 
     # print(target_features)

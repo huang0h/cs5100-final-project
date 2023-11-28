@@ -3,6 +3,4 @@ Pipfile
 Pipfile.lock
 .cache
 .env
-results/
-MillionSongSubset/
-features/
+*/*
