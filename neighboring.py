@@ -10,6 +10,9 @@ with open('msd-data/features.json', 'r') as f:
 
 SONG_COUNT = len(all_feats)
 
+# https://medium.com/@datasc.yash/using-spotifys-web-api-to-extract-high-level-features-and-download-song-previews-38b0b1728a8f
+# get scheming :)
+
 all_neighbors = {}
 neighbor_array = [None for _ in range(SONG_COUNT)]
 
