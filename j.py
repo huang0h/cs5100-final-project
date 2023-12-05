@@ -3,11 +3,11 @@ from heapq import heappush, heappop
 
 from utils import *
 
-SEARCH_SIZE = 25
+SEARCH_SIZE = 40
 SEARCH_DEPTH = 1000
-NORM = 1
+NORM = 2
 
-with open(f'msd-data/neighbors-{SEARCH_SIZE}.json', 'r') as f:
+with open(f'msd-data/neighbors-{SEARCH_SIZE}-l={NORM}.json', 'r') as f:
     neighbors = json.load(f)
 
 with open('msd-data/features.json', 'r') as f:

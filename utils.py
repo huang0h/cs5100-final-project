@@ -1,4 +1,5 @@
 import math
+import numpy as np
 
 class bcolors:
     HEADER = '\033[95m'
@@ -23,7 +24,7 @@ MAX_TEMPO = 240
 MIN_TIME_SIGNATURE = 3
 MAX_TIME_SIGNATURE = 7
 
-AUDIO_FEATURES = {
+AUDIO_FEATURES = [
     'acousticness', 
     'danceability', 
     'energy', 
@@ -39,7 +40,7 @@ AUDIO_FEATURES = {
     'key_confidence',
     'mode_confidence',
     'time_signature_confidence',
-}
+]
 
 def printsep():
     print(f'\n-----------------------------------------------------------------\n')
@@ -102,6 +103,12 @@ def feature_distance_l2(target_features: dict, test_features: dict) -> float:
         
     return sum ** 0.5
 
+def array_distance_l1(target_features: np.ndarray, test_features: np.ndarray) -> float:
+    return np.sum(target_features - test_features)
+
+def array_distance_l2(target_features: np.ndarray, test_features: np.ndarray) -> float:
+    return np.sqrt(np.sum(np.power(target_features - test_features, 2)))
+
 def backtrace(path: dict, target_id: str, source_id: str):
     sol_path = []
 
@@ -112,4 +119,6 @@ def backtrace(path: dict, target_id: str, source_id: str):
 
     return sol_path[::-1]
 
-    
+def json_features_to_np(features: dict) -> np.ndarray:
+    feat_list = [features[feat] for feat in AUDIO_FEATURES if feat in features]
+    return np.array(feat_list)

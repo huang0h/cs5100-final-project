@@ -3,7 +3,8 @@ import heapq, json, os, sys
 
 from utils import *
 
-NEIGHBOR_COUNT = 25
+NEIGHBOR_COUNT = 40
+distance_function = feature_distance_l2
 
 with open('msd-data/features.json', 'r') as f:
     all_feats = json.load(f)
@@ -24,11 +25,11 @@ for n, (id, feats) in enumerate(all_feats.items()):
         if other == id:
             neighbor_array[i] = (id, np.inf)
         else:
-            neighbor_array[i] = (other, feature_distance_l2(feats, other_feats))
+            neighbor_array[i] = (other, distance_function(feats, other_feats))
     
     neighbor_array.sort(key=lambda t: t[1])
     
     all_neighbors[id] = [t[0] for t in neighbor_array[:NEIGHBOR_COUNT]]
 
-with open(f'msd-data/neighbors-{NEIGHBOR_COUNT}.json', 'w') as f:
+with open(f'msd-data/neighbors-{NEIGHBOR_COUNT}-l=2.json', 'w') as f:
     json.dump(all_neighbors, f, indent=2)
