@@ -70,6 +70,12 @@ def collect_mfcc_features(FEATS_DIR: str, feedback: bool = True) -> dict[str, np
     print('')
     return all_feats
 
+def to_json(o: dict | np.ndarray):
+    if type(o) == dict:
+        return o
+    elif type(o) == np.ndarray:
+        return o.tolist()
+
 def clamp(val: float, min_v: float, max_v: float) -> float:
     return max(min(val, max_v), min_v)
 

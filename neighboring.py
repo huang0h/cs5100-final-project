@@ -1,10 +1,11 @@
 import numpy as np
 import heapq, json, os, sys
+import multiprocessing
 
 from utils import *
 
 neighbors = [(10, {}), (25, {}), (40, {})]
-NORM = 1
+NORM = 2
 
 if NORM == 1:
     distance_function = array_distance_l1
@@ -29,7 +30,7 @@ print('')
 print(f'Calculating neighbors... | timestamp: {timenow()}')
 
 for n, (id, feats) in enumerate(all_feats.items()):
-    if n % 100 == 0:
+    if n % 10 == 0:
         print(f'>> Calculating neighbors for song #{n}/{SONG_COUNT}... | timestamp: {timenow()}', end='\r')
 
     for i, (other, other_feats) in enumerate(all_feats.items()):
