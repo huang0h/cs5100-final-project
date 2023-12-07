@@ -1,4 +1,4 @@
-import math
+import math, time, json, os
 import numpy as np
 
 class bcolors:
@@ -42,8 +42,33 @@ AUDIO_FEATURES = [
     'time_signature_confidence',
 ]
 
-def printsep():
-    print(f'\n-----------------------------------------------------------------\n')
+def printsep(should_print: bool = True):
+    if should_print:
+        print(f'\n-----------------------------------------------------------------\n')
+
+def timenow():
+    return time.strftime("%I:%M:%S", time.localtime())
+
+def log(should_print: bool):
+    return (lambda x: print(x)) if should_print else (lambda x: x)
+
+def collect_mfcc_features(FEATS_DIR: str, feedback: bool = True) -> dict[str, np.ndarray]:
+    if feedback:
+        print(f'Collecting MFCC features from {FEATS_DIR}...')
+    all_feats = {}
+
+    for i, feat_file in enumerate(os.listdir(FEATS_DIR)):
+        if i % 100 == 0:
+            print(f'>> Collecting song #{i}...', end='\r')
+
+        with open(f'{FEATS_DIR}/{feat_file}') as f:
+            array = json.load(f)
+            array = np.ravel(array)
+            
+            all_feats[feat_file.strip('.json')] = array
+    
+    print('')
+    return all_feats
 
 def clamp(val: float, min_v: float, max_v: float) -> float:
     return max(min(val, max_v), min_v)
@@ -104,7 +129,7 @@ def feature_distance_l2(target_features: dict, test_features: dict) -> float:
     return sum ** 0.5
 
 def array_distance_l1(target_features: np.ndarray, test_features: np.ndarray) -> float:
-    return np.sum(target_features - test_features)
+    return np.sum(np.abs(target_features - test_features))
 
 def array_distance_l2(target_features: np.ndarray, test_features: np.ndarray) -> float:
     return np.sqrt(np.sum(np.power(target_features - test_features, 2)))

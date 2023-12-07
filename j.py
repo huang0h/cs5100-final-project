@@ -4,54 +4,62 @@ from heapq import heappush, heappop
 from utils import *
 
 SEARCH_SIZE = 40
-SEARCH_DEPTH = 1000
-NORM = 2
+SEARCH_DEPTH = math.inf
+NORM = 1
 
-with open(f'msd-data/neighbors-{SEARCH_SIZE}-l={NORM}.json', 'r') as f:
+with open(f'msd-data/neighbors-{SEARCH_SIZE}-l={NORM}-f=mfcc.json', 'r') as f:
     neighbors = json.load(f)
 
-with open('msd-data/features.json', 'r') as f:
-    features = json.load(f)
+# with open('msd-data/features.json', 'r') as f:
+#     features = json.load(f)
+features = collect_mfcc_features('msd-data/mfcc-features')
 
 # set of all songs
 all_songs = list(features)
 # random.shuffle(all_songs)
 
-RESULTS_FOLDER = f'msd-results/results-n={SEARCH_SIZE}-d={SEARCH_DEPTH}-l={NORM}'
+RESULTS_FOLDER = f'msd-results/results-n={SEARCH_SIZE}-d={SEARCH_DEPTH}-l={NORM}-f=mfcc'
 os.mkdir(f'{RESULTS_FOLDER}')
 
 if NORM == 1:
-    norm_func = feature_distance_l1
+    norm_func = array_distance_l1
 elif NORM == 2:
-    norm_func = feature_distance_l2
+    norm_func = array_distance_l2
 
-def run_search(SOURCE_ID: str, TARGET_ID: str, feedback: bool = True):
-    source_feats = normalized_features(features[SOURCE_ID])
-    target_feats = normalized_features(features[TARGET_ID])
+SHOULD_PRINT = True
+log_m = log(SHOULD_PRINT)
 
-    if feedback:
-        print(f'{bcolors.OKCYAN}{bcolors.BOLD}SOURCE: {SOURCE_ID} | GOAL: {TARGET_ID}{bcolors.ENDC}')
-        print(f'{bcolors.OKCYAN}Ideal straight-line cost: {norm_func(source_feats, target_feats)}{bcolors.ENDC}')
+def run_search(SOURCE_ID: str, TARGET_ID: str):
+    source_feats = features[SOURCE_ID]
+    target_feats = features[TARGET_ID]
+
+    log_m(f'{bcolors.OKCYAN}{bcolors.BOLD}SOURCE: {SOURCE_ID} | GOAL: {TARGET_ID}{bcolors.ENDC}')
+    log_m(f'{bcolors.OKCYAN}Ideal straight-line cost: {norm_func(source_feats, target_feats)}{bcolors.ENDC}')
 
     explored = set([])
 
     frontier = [(-1, SOURCE_ID)]
     path: dict[str, tuple[float, str]] = {SOURCE_ID: (0, None)}
 
-    if feedback:
-        print(f'{bcolors.OKCYAN}Search Parameters: {SEARCH_SIZE=} | {SEARCH_DEPTH=} | {NORM=}{bcolors.ENDC}')
-        printsep()
+    log_m(f'{bcolors.OKCYAN}Search Parameters: {SEARCH_SIZE=} | {SEARCH_DEPTH=} | {NORM=}{bcolors.ENDC}')
+    printsep(SHOULD_PRINT)
 
     search_iter = 0
     search_id = ''
 
     while search_iter < SEARCH_DEPTH and search_id != TARGET_ID:
-        total_cost, search_id = heappop(frontier)
+        try:
+            total_cost, search_id = heappop(frontier)
+        except IndexError:
+            log_m(f'Search for {SOURCE_ID} to {TARGET_ID} ended early on iteration {search_iter}')
 
-        if feedback:
-            print(f'Iteration: {search_iter} | Song: {search_id} | Total cost: {total_cost:.4f}')
-
+        if search_id in explored:
+            continue
+        
         explored.add(search_id)
+
+        log_m(f'Iteration: {search_iter} | Song: {search_id} | Total cost: {total_cost:.4f}')
+        
         search_feats = features[search_id]
         neighbor_ids = neighbors[search_id]
 
@@ -71,15 +79,13 @@ def run_search(SOURCE_ID: str, TARGET_ID: str, feedback: bool = True):
 
         search_iter += 1
     
-    if feedback:
-        printsep()
+    printsep(SHOULD_PRINT)
 
     found_path = search_id == TARGET_ID
 
-    if not found_path:
-        if feedback:
-            print(f'{bcolors.FAIL}{bcolors.BOLD}No path found :({bcolors.ENDC}')
-            print("Approximating search path...")
+    if not found_path:        
+        log_m(f'{bcolors.FAIL}{bcolors.BOLD}No path found :({bcolors.ENDC}')
+        log_m("Approximating search path...")
 
         closest_to_target = None
         closest_distance = math.inf
@@ -95,14 +101,12 @@ def run_search(SOURCE_ID: str, TARGET_ID: str, feedback: bool = True):
                 closest_to_target = id
                 closest_feats = feats
         
-        if feedback:
-            print(f"Using song {closest_to_target} as the target (distance from target: {closest_distance})...")
+        log_m(f"Using song {closest_to_target} as the target (distance from target: {closest_distance})...")
 
         solution_path = backtrace(path, closest_to_target, SOURCE_ID)
 
     else:
-        if feedback:
-            print(f'{bcolors.OKGREEN}{bcolors.BOLD}Found a path!{bcolors.ENDC}')
+        log_m(f'{bcolors.OKGREEN}{bcolors.BOLD}Found a path!{bcolors.ENDC}')
         solution_path = backtrace(path, TARGET_ID, SOURCE_ID)
 
     data = {
@@ -124,21 +128,21 @@ def run_search(SOURCE_ID: str, TARGET_ID: str, feedback: bool = True):
     with open(f'{RESULTS_FOLDER}/{SOURCE_ID}-{TARGET_ID}.json', 'w') as f:
         json.dump(data, f, indent=4)
 
-    if feedback:
-        printsep()
+    printsep(SHOULD_PRINT)
 
-for i in range(3000):
+iters = 100
+for i in range(iters):
     if len(all_songs) < 2:
         break
 
-    if i % 250 == 0:
-        print(f'Searching song #{i}...')
+    if i % 10 == 0:
+        print(f'Searching #{i}/{iters}...')
 
     src, dst = random.choices(all_songs, k=2)
+    
+    if src == dst:
+        continue
     if os.path.isfile(f'{RESULTS_FOLDER}/{src}-{dst}.json'):
         continue
 
-    if src == dst:
-        continue
-
-    run_search(src, dst, feedback=False)
+    run_search(src, dst)
