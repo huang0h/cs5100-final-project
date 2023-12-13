@@ -70,12 +70,6 @@ def collect_mfcc_features(FEATS_DIR: str, feedback: bool = True) -> dict[str, np
     print('')
     return all_feats
 
-def to_json(o: dict | np.ndarray):
-    if type(o) == dict:
-        return o
-    elif type(o) == np.ndarray:
-        return o.tolist()
-
 def clamp(val: float, min_v: float, max_v: float) -> float:
     return max(min(val, max_v), min_v)
 
@@ -150,6 +144,12 @@ def backtrace(path: dict, target_id: str, source_id: str):
 
     return sol_path[::-1]
 
-def json_features_to_np(features: dict) -> np.ndarray:
+def to_json(o: dict | np.ndarray):
+    if type(o) == dict:
+        return o
+    elif type(o) == np.ndarray:
+        return o.tolist()
+
+def json_features_to_np(features: dict | list) -> np.ndarray:
     feat_list = [features[feat] for feat in AUDIO_FEATURES if feat in features]
     return np.array(feat_list)

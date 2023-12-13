@@ -8,32 +8,40 @@ from utils import *
 SEARCH_SIZE = 25
 SEARCH_DEPTH = 10000
 NORM = 1
+MFCC = False
 
 print('Collecting neighbors...')
-with open(f'msd-data/neighbors-{SEARCH_SIZE}-l={NORM}.json', 'r') as f:
+with open(f'msd-data/neighbors-{SEARCH_SIZE}-l={NORM}{"-f=mfcc" if MFCC else ""}.json', 'r') as f:
     neighbors = json.load(f)
 
 print('Collecting features...')
-with open('msd-data/features.json', 'r') as f:
+with open(f'msd-data/{"mfcc-" if MFCC else ""}features.json', 'r') as f:
     features = json.load(f)
 
-# print('Converting to numpy...')
-# for k, v in features.items():
-#     features[k] = np.array(v)
+if MFCC:
+    print('Converting to numpy...')
+    for k, v in features.items():
+        features[k] = np.array(v)
 
 # set of all songs
 all_songs = list(features)
 
-RESULTS_FOLDER = f'msd-results/results-n={SEARCH_SIZE}-d={SEARCH_DEPTH}-l={NORM}'
-if os.path.isdir(RESULTS_FOLDER):
-    shutil.rmtree(RESULTS_FOLDER)
+RESULTS_FOLDER = f'msd-results/results-n={SEARCH_SIZE}-d={SEARCH_DEPTH}-l={NORM}{"-f=mfcc" if MFCC else ""}'
+# if os.path.isdir(RESULTS_FOLDER):
+    # shutil.rmtree(RESULTS_FOLDER)
 
-os.mkdir(f'{RESULTS_FOLDER}')
+# os.mkdir(f'{RESULTS_FOLDER}')
 
-if NORM == 1:
-    norm_func = feature_distance_l1
-elif NORM == 2:
-    norm_func = feature_distance_l2
+if MFCC:
+    if NORM == 1:
+        norm_func = array_distance_l1
+    elif NORM == 2:
+        norm_func = array_distance_l2
+else:
+    if NORM == 1:
+        norm_func = feature_distance_l1
+    elif NORM == 2:
+        norm_func = feature_distance_l2
 
 SHOULD_PRINT = False
 log_m = log(SHOULD_PRINT)
@@ -140,9 +148,9 @@ def run_search(SOURCE_ID: str, TARGET_ID: str):
 
     printsep(SHOULD_PRINT)
 
-iters = 5000
+iters = 4868
 print(f'Performing {iters} searches... | timestamp: {timenow()}')
-for i in range(iters):
+for i in range(iters): 
     if len(all_songs) < 2:
         break
 
