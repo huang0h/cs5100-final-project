@@ -1,4 +1,4 @@
-import math, time, json, os
+import time, json, os
 import numpy as np
 
 class bcolors:
@@ -49,6 +49,7 @@ def printsep(should_print: bool = True):
 def timenow():
     return time.strftime("%I:%M:%S", time.localtime())
 
+# logging function that can be enabled/disabled with one variable
 def log(should_print: bool):
     return (lambda x: print(x)) if should_print else (lambda x: x)
 
@@ -76,6 +77,7 @@ def clamp(val: float, min_v: float, max_v: float) -> float:
 def ids_from_tracks(response) -> list[str]:
     return [t['uri'].strip('spotify:track:') for t in response['tracks'] if t['uri']]
 
+# normalize MSD features to all be in the interval [0, 1]
 def normalized_features(analysis: dict | None) -> dict[str, float] | None:
     if analysis == None:
         return None
@@ -83,7 +85,6 @@ def normalized_features(analysis: dict | None) -> dict[str, float] | None:
     norm_features = {}
 
     for key, val in analysis.items():
-        # print(key)
         if key not in AUDIO_FEATURES:
             continue
 
@@ -103,6 +104,7 @@ def normalized_features(analysis: dict | None) -> dict[str, float] | None:
 
     return norm_features
 
+# compute the L1 norm, aka Manhattan distance, between two MSD feature vectors
 def feature_distance_l1(target_features: dict, test_features: dict) -> float:
     sum = 0
     
@@ -114,12 +116,9 @@ def feature_distance_l1(target_features: dict, test_features: dict) -> float:
     
     return sum
 
+# compute the L2 norm, aka Euclidean distance, between two MSD feature vectors
 def feature_distance_l2(target_features: dict, test_features: dict) -> float:
     sum = 0
-
-    # print(target_features)
-    # print(test_features)
-
     for feat in AUDIO_FEATURES:
         if not (feat in target_features and feat in test_features):
             continue
@@ -128,12 +127,15 @@ def feature_distance_l2(target_features: dict, test_features: dict) -> float:
         
     return sum ** 0.5
 
+# compute the L1 norm, aka Manhattan distance, between two MFCC feature vectors
 def array_distance_l1(target_features: np.ndarray, test_features: np.ndarray) -> float:
     return np.sum(np.abs(target_features - test_features))
 
+# compute the L2 norm, aka Euclidean distance, between two MFCC feature vectors
 def array_distance_l2(target_features: np.ndarray, test_features: np.ndarray) -> float:
     return np.sqrt(np.sum(np.power(target_features - test_features, 2)))
 
+# generates the solution path for an iteration of A* search
 def backtrace(path: dict, target_id: str, source_id: str):
     sol_path = []
 

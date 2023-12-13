@@ -1,4 +1,4 @@
-import json, os, sys, time, math, random, shutil
+import json, os, math, random, shutil
 from heapq import heappush, heappop
 
 import numpy as np
@@ -27,6 +27,8 @@ if MFCC:
 all_songs = list(features)
 
 RESULTS_FOLDER = f'msd-results/results-n={SEARCH_SIZE}-d={SEARCH_DEPTH}-l={NORM}{"-f=mfcc" if MFCC else ""}'
+
+# optionally clear the results folder before running this trial
 # if os.path.isdir(RESULTS_FOLDER):
     # shutil.rmtree(RESULTS_FOLDER)
 
@@ -46,6 +48,7 @@ else:
 SHOULD_PRINT = False
 log_m = log(SHOULD_PRINT)
 
+# runs one iteration of A* search for the given source and target songs
 def run_search(SOURCE_ID: str, TARGET_ID: str):
     source_feats = features[SOURCE_ID]
     target_feats = features[TARGET_ID]
@@ -101,7 +104,8 @@ def run_search(SOURCE_ID: str, TARGET_ID: str):
 
     found_path = search_id == TARGET_ID
 
-    if not found_path:        
+    # if no direct path could be found, approximate using the closest song to the target that we've seen
+    if not found_path:     
         log_m(f'{bcolors.FAIL}{bcolors.BOLD}No path found :({bcolors.ENDC}')
         log_m("Approximating search path...")
 
@@ -148,7 +152,7 @@ def run_search(SOURCE_ID: str, TARGET_ID: str):
 
     printsep(SHOULD_PRINT)
 
-iters = 4868
+iters = 5000
 print(f'Performing {iters} searches... | timestamp: {timenow()}')
 for i in range(iters): 
     if len(all_songs) < 2:
